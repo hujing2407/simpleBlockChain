@@ -1,4 +1,4 @@
-package simpleBlockChain
+package main
 
 import "fmt"
 
