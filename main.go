@@ -16,14 +16,6 @@ func main() {
 	blChain.AddBlockToChain("Send 400 to D")
 	blChain.AddBlockToChain("Send 500 to E")
 
-	//fmt.Println(blChain)
-
-	//
-	//bytes := block.Serialize()
-	//fmt.Println(bytes)
-	//
-	//newblock := BLC.Deserialize(bytes)
-	//fmt.Printf("%d\n", newblock.Nonce)
-	//fmt.Printf("%x\n", newblock.Hash)
+	blChain.PrintChain()
 
 }

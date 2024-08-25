@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
+	"math/big"
+	"time"
 )
 
 const dbName = "blc.db"
@@ -14,7 +16,43 @@ type Blockchain struct {
 	DB  *bolt.DB
 }
 
-// Create a block chain with Genesis block
+func (blc *Blockchain) PrintChain() {
+	var block *Block
+	var currentHash []byte = blc.Tip
+
+	for {
+		err := blc.DB.View(func(tx *bolt.Tx) error {
+
+			b := tx.Bucket([]byte(blockTableName))
+			if b != nil {
+				// Get the current latest block
+				blockBytes := b.Get(currentHash)
+				block = Deserialize(blockBytes)
+
+				fmt.Printf("\nBlock Height: %d\n", block.Height)
+				fmt.Printf("PrevBlockHash: %x\n", block.PrevBlockHash)
+				fmt.Printf("Data: %s\n", block.Data)
+				fmt.Printf("Timestamp: %s\n", time.Unix(block.Timestamp, 0).Format("2006-01-02 03:04:05 PM"))
+				fmt.Printf("Hash: %x\n", block.Hash)
+				fmt.Printf("Nonce: %d\n", block.Nonce)
+			}
+			return nil
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+
+		var hashInt big.Int
+		hashInt.SetBytes(block.PrevBlockHash)
+		if big.NewInt(0).Cmp(&hashInt) == 0 {
+			break
+		} else {
+			currentHash = block.PrevBlockHash
+		}
+	}
+}
+
+/* Create a block chain with Genesis block */
 func CreateBlockChainWithGenesis() *Blockchain {
 	// Open the blc.db data file
 	db, err := bolt.Open(dbName, 0600, nil)
@@ -59,7 +97,7 @@ func CreateBlockChainWithGenesis() *Blockchain {
 	return &Blockchain{blockHash, db}
 }
 
-// Add a block to the chain
+/* Add a block to the chain */
 func (blc *Blockchain) AddBlockToChain(data string) {
 
 	err := blc.DB.Update(func(tx *bolt.Tx) error {
