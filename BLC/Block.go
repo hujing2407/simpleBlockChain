@@ -2,10 +2,8 @@ package BLC
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/gob"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -45,14 +43,17 @@ func Deserialize(blockBytes []byte) *Block {
 func NewBlock(data string, height int64, prevBlockHash []byte) *Block {
 	// Create a new block
 	block := &Block{height, prevBlockHash, []byte(data), time.Now().Unix(), nil, 0}
-	block.SetHash()
+	// Replaced the following call with POW progress
+	//block.SetHash()
 
 	// Call POW function to get HASH & NONCE
-	//pow := NewProofOfWork(block)
+	pow := NewProofOfWork(block)
 
 	// Validate mining work
-	//hash, nonce := pow.Run()
+	hash, nonce := pow.Run()
 
+	block.Hash = hash[:]
+	block.Nonce = nonce
 	return block
 }
 
@@ -61,6 +62,7 @@ func CreateGenesisBlock(data string) *Block {
 		[]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 }
 
+/* Replaced the SetHash() to POW process
 func (block *Block) SetHash() {
 	// Convert Height,Timestamp to []byte
 	heightBytes := IntToHex(block.Height)
@@ -73,10 +75,4 @@ func (block *Block) SetHash() {
 	// Generate Hash value
 	hash := sha256.Sum256(blockBytes)
 	block.Hash = hash[:]
-
-	// TODO: remove the println()
-	//fmt.Println(heightBytes)
-	//fmt.Println(timeString)
-	//fmt.Println(timeBytes)
-
-}
+}*/
