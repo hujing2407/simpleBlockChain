@@ -43,11 +43,10 @@ func Deserialize(blockBytes []byte) *Block {
 }
 
 func NewBlock(data string, height int64, prevBlockHash []byte) *Block {
-
 	// Create a new block
 	block := &Block{height, prevBlockHash, []byte(data), time.Now().Unix(), nil, 0}
-
 	block.SetHash()
+
 	// Call POW function to get HASH & NONCE
 	//pow := NewProofOfWork(block)
 
@@ -55,6 +54,11 @@ func NewBlock(data string, height int64, prevBlockHash []byte) *Block {
 	//hash, nonce := pow.Run()
 
 	return block
+}
+
+func CreateGenesisBlock(data string) *Block {
+	return NewBlock(data, 1,
+		[]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 }
 
 func (block *Block) SetHash() {

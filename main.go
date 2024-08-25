@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-	fmt.Println("Hi, Block Chain Project in Golang")
-	block := BLC.NewBlock("Genesis Block", 1,
-		[]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
-	fmt.Println(block)
+	//fmt.Println("Hi, Block Chain Project in Golang")
+	genesisBlc := BLC.CreateBlockChainWithGenesis()
+	fmt.Println(genesisBlc)
+	fmt.Println(genesisBlc.Blocks[0])
 }
