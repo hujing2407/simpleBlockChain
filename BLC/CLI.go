@@ -8,7 +8,6 @@ import (
 )
 
 type CLI struct {
-	Blc *Blockchain
 }
 
 func (cli *CLI) Run() {
@@ -67,11 +66,23 @@ func (cli *CLI) createGenesis(data string) {
 	CreateBlockChainWithGenesis(data)
 }
 func (cli *CLI) addBlock(data string) {
-	cli.Blc.AddBlockToChain(data)
+	if DBExisted() == false {
+		fmt.Println("Error: Database is not existed!")
+		os.Exit(1)
+	}
+	blc := GetBlockChain()
+	defer blc.DB.Close()
+	blc.AddBlockToChain(data)
 }
 
 func (cli *CLI) printChain() {
-	cli.Blc.PrintChain()
+	if DBExisted() == false {
+		fmt.Println("Error: Database is not existed!")
+		os.Exit(1)
+	}
+	blc := GetBlockChain()
+	defer blc.DB.Close()
+	blc.PrintChain()
 }
 
 func printUsage() {

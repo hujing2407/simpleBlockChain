@@ -17,7 +17,7 @@ type Blockchain struct {
 	DB  *bolt.DB
 }
 
-func dbExisted() bool {
+func DBExisted() bool {
 	if _, err := os.Stat(dbName); os.IsNotExist(err) {
 		return false
 	}
@@ -45,7 +45,7 @@ func (blc *Blockchain) PrintChain() {
 
 /* Create a block chain with Genesis block */
 func CreateBlockChainWithGenesis(data string) {
-	if dbExisted() {
+	if DBExisted() {
 		fmt.Println("Failed: Genesis block is existed!")
 		os.Exit(1)
 	}
@@ -121,4 +121,23 @@ func (blc *Blockchain) AddBlockToChain(data string) {
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+func GetBlockChain() *Blockchain {
+
+	// Open the blc.db data file
+	db, err := bolt.Open(dbName, 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var tip []byte
+	err = db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blockTableName))
+		if b != nil {
+			tip = b.Get([]byte("latest"))
+		}
+		return nil
+	})
+	return &Blockchain{tip, db}
 }

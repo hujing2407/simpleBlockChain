@@ -5,8 +5,6 @@ import (
 )
 
 func main() {
-	//blChain := BLC.CreateBlockChainWithGenesis()
-	//defer blChain.DB.Close()
 
 	cli := BLC.CLI{}
 	cli.Run()
