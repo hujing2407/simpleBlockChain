@@ -5,6 +5,7 @@ import (
 	"github.com/boltdb/bolt"
 	"log"
 	"math/big"
+	"os"
 	"time"
 )
 
@@ -16,6 +17,12 @@ type Blockchain struct {
 	DB  *bolt.DB
 }
 
+func dbExisted() bool {
+	if _, err := os.Stat(dbName); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
 func (blc *Blockchain) PrintChain() {
 
 	blcIterator := blc.Iterator()
@@ -38,6 +45,24 @@ func (blc *Blockchain) PrintChain() {
 
 /* Create a block chain with Genesis block */
 func CreateBlockChainWithGenesis() *Blockchain {
+	if dbExisted() {
+		//fmt.Println("Genesis Block is existed!")
+		db, err := bolt.Open(dbName, 0600, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var blc *Blockchain
+		err = db.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte(blockTableName))
+			hash := b.Get([]byte("latest"))
+			blc = &Blockchain{hash, db}
+			return nil
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		return blc
+	}
 	// Open the blc.db data file
 	db, err := bolt.Open(dbName, 0600, nil)
 	if err != nil {
