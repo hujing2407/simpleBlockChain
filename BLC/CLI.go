@@ -3,11 +3,25 @@ package BLC
 import (
 	"flag"
 	"fmt"
+	"hu169.ca/simpleBlockChain/BLC/TX"
 	"log"
 	"os"
 )
 
 type CLI struct {
+}
+
+func printUsage() {
+	fmt.Println("Usage:")
+	fmt.Println("\tcreateGenesis -address \t-> Create genesis block")
+	fmt.Println("\taddBlock -data DATA \t-> TX data")
+	fmt.Println("\tprintChain \t\t-> Print out blocks details")
+}
+func isValidArgs() {
+	if len(os.Args) < 2 {
+		printUsage()
+		os.Exit(1)
+	}
 }
 
 func (cli *CLI) Run() {
@@ -17,7 +31,7 @@ func (cli *CLI) Run() {
 	createGenesisCmd := flag.NewFlagSet("createGenesis", flag.ExitOnError)
 
 	flagAddBlockData := addBlockCmd.String("data", "github.com", "Tx data")
-	createGenesisData := createGenesisCmd.String("data", "Genesis block data...", "Genesis Info")
+	flagCreateGenesisWithAddress := createGenesisCmd.String("address", "", "Create Genesis Block")
 	switch os.Args[1] {
 	case "createGenesis":
 		err := createGenesisCmd.Parse(os.Args[2:])
@@ -41,12 +55,12 @@ func (cli *CLI) Run() {
 	}
 
 	if createGenesisCmd.Parsed() {
-		if *flagAddBlockData == "" {
-			fmt.Println("Failed: Tx data is empty!")
+		if *flagCreateGenesisWithAddress == "" {
+			fmt.Println("Failed: Address is empty!")
 			printUsage()
 			os.Exit(1)
 		}
-		cli.createGenesis(*createGenesisData)
+		cli.createGenesis(*flagCreateGenesisWithAddress)
 	}
 
 	if addBlockCmd.Parsed() {
@@ -54,7 +68,7 @@ func (cli *CLI) Run() {
 			printUsage()
 			os.Exit(1)
 		}
-		cli.addBlock(*flagAddBlockData)
+		cli.addBlock([]*TX.Transaction{})
 	}
 
 	if printChainCmd.Parsed() {
@@ -62,17 +76,17 @@ func (cli *CLI) Run() {
 		cli.printChain()
 	}
 }
-func (cli *CLI) createGenesis(data string) {
-	CreateBlockChainWithGenesis(data)
+func (cli *CLI) createGenesis(address string) {
+	CreateBlockChainWithGenesis(address)
 }
-func (cli *CLI) addBlock(data string) {
+func (cli *CLI) addBlock(txs []*TX.Transaction) {
 	if DBExisted() == false {
 		fmt.Println("Error: Database is not existed!")
 		os.Exit(1)
 	}
 	blc := GetBlockChain()
 	defer blc.DB.Close()
-	blc.AddBlockToChain(data)
+	blc.AddBlockToChain(txs)
 }
 
 func (cli *CLI) printChain() {
@@ -83,17 +97,4 @@ func (cli *CLI) printChain() {
 	blc := GetBlockChain()
 	defer blc.DB.Close()
 	blc.PrintChain()
-}
-
-func printUsage() {
-	fmt.Println("Usage:")
-	fmt.Println("\tcreateGenesis -data \t-> Create genesis block")
-	fmt.Println("\taddBlock -data DATA \t-> TX data")
-	fmt.Println("\tprintChain \t\t-> Print out blocks details")
-}
-func isValidArgs() {
-	if len(os.Args) < 2 {
-		printUsage()
-		os.Exit(1)
-	}
 }

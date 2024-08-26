@@ -2,7 +2,9 @@ package BLC
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
+	"hu169.ca/simpleBlockChain/BLC/TX"
 	"log"
 	"time"
 )
@@ -10,7 +12,7 @@ import (
 type Block struct {
 	Height        int64
 	PrevBlockHash []byte
-	Data          []byte
+	TXs           []*TX.Transaction
 	Timestamp     int64
 	Hash          []byte //256 bits
 	Nonce         int64
@@ -40,9 +42,9 @@ func Deserialize(blockBytes []byte) *Block {
 	return &block
 }
 
-func NewBlock(data string, height int64, prevBlockHash []byte) *Block {
+func NewBlock(txs []*TX.Transaction, height int64, prevBlockHash []byte) *Block {
 	// Create a new block
-	block := &Block{height, prevBlockHash, []byte(data), time.Now().Unix(), nil, 0}
+	block := &Block{height, prevBlockHash, txs, time.Now().Unix(), nil, 0}
 	// Replaced the following call with POW progress
 	//block.SetHash()
 
@@ -57,23 +59,19 @@ func NewBlock(data string, height int64, prevBlockHash []byte) *Block {
 	return block
 }
 
-func CreateGenesisBlock(data string) *Block {
+func CreateGenesisBlock(txs []*TX.Transaction) *Block {
 	log.Println("Creating Genesis Block...")
-	return NewBlock(data, 1,
+	return NewBlock(txs, 1,
 		[]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 }
 
-/* Replaced the SetHash() to POW process
-func (block *Block) SetHash() {
-	// Convert Height,Timestamp to []byte
-	heightBytes := IntToHex(block.Height)
-	timeString := strconv.FormatInt(block.Timestamp, 2)
-	timeBytes := []byte(timeString)
-
-	// Combine all attributes
-	blockBytes := bytes.Join([][]byte{
-		heightBytes, block.PrevBlockHash, block.Data, timeBytes, block.Hash}, []byte{})
-	// Generate Hash value
-	hash := sha256.Sum256(blockBytes)
-	block.Hash = hash[:]
-}*/
+// Convert TXs to []byte
+func (block *Block) HashTransactions() []byte {
+	var txHash [32]byte
+	var txHashes [][]byte
+	for _, tx := range block.TXs {
+		txHashes = append(txHashes, tx.TxHash)
+	}
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+	return txHash[:]
+}

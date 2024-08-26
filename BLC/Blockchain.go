@@ -3,6 +3,7 @@ package BLC
 import (
 	"fmt"
 	"github.com/boltdb/bolt"
+	"hu169.ca/simpleBlockChain/BLC/TX"
 	"log"
 	"math/big"
 	"os"
@@ -30,11 +31,22 @@ func (blc *Blockchain) PrintChain() {
 		block := blcIterator.Next()
 		fmt.Printf("\nBlock Height: %d\n", block.Height)
 		fmt.Printf("PrevBlockHash: %x\n", block.PrevBlockHash)
-		fmt.Printf("Data: %s\n", block.Data)
+
 		fmt.Printf("Timestamp: %s\n", time.Unix(block.Timestamp, 0).Format("2006-01-02 03:04:05 PM"))
 		fmt.Printf("Hash: %x\n", block.Hash)
 		fmt.Printf("Nonce: %d\n", block.Nonce)
-
+		for i, tx := range block.TXs {
+			fmt.Printf("TXs[%d]: Hash [%x]\n", i, tx.TxHash)
+			for _, in := range tx.Vins {
+				fmt.Printf("\tVins Hash:\t%x\n", in.TxHash)
+				fmt.Printf("\tVins Vout:\t%d\n", in.Vout)
+				fmt.Printf("\tVins ScriptSig:\t%s\n", in.ScriptSig)
+			}
+			for _, out := range tx.Vouts {
+				fmt.Printf("\tVouts Value:\t%d\n", out.Value)
+				fmt.Printf("\tVouts Pubkey:\t%s\n", out.ScriptPubkey)
+			}
+		}
 		var hashInt big.Int
 		hashInt.SetBytes(block.PrevBlockHash)
 		if big.NewInt(0).Cmp(&hashInt) == 0 {
@@ -44,7 +56,7 @@ func (blc *Blockchain) PrintChain() {
 }
 
 /* Create a block chain with Genesis block */
-func CreateBlockChainWithGenesis(data string) {
+func CreateBlockChainWithGenesis(addr string) {
 	if DBExisted() {
 		fmt.Println("Failed: Genesis block is existed!")
 		os.Exit(1)
@@ -65,7 +77,9 @@ func CreateBlockChainWithGenesis(data string) {
 
 		// Write on table
 		if b != nil { // db process Failed
-			genesisBlock := CreateGenesisBlock(data)
+			// Create coinbase Tx for Genesis Block
+			txCoinbase := TX.NewCoinbaseTransaction(addr)
+			genesisBlock := CreateGenesisBlock([]*TX.Transaction{txCoinbase})
 			err := b.Put(genesisBlock.Hash, genesisBlock.Serialize())
 			if err != nil { // db process Failed
 				log.Panicf("Failed to PUT block into db! %s", err)
@@ -86,7 +100,7 @@ func CreateBlockChainWithGenesis(data string) {
 }
 
 /* Add a block to the chain */
-func (blc *Blockchain) AddBlockToChain(data string) {
+func (blc *Blockchain) AddBlockToChain(txs []*TX.Transaction) {
 
 	err := blc.DB.Update(func(tx *bolt.Tx) error {
 		// 1. Get table
@@ -99,7 +113,7 @@ func (blc *Blockchain) AddBlockToChain(data string) {
 			lastBlockBytes := b.Get(blc.Tip)
 			lastBlock := Deserialize(lastBlockBytes)
 
-			newBlock := NewBlock(data, lastBlock.Height+1, blc.Tip)
+			newBlock := NewBlock(txs, lastBlock.Height+1, blc.Tip)
 			err := b.Put(newBlock.Hash, newBlock.Serialize())
 			if err != nil { // db process Failed
 				log.Panicf("Failed to PUT block into db! %s", err)
