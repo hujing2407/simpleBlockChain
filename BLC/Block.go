@@ -58,6 +58,7 @@ func NewBlock(data string, height int64, prevBlockHash []byte) *Block {
 }
 
 func CreateGenesisBlock(data string) *Block {
+	log.Println("Creating Genesis Block...")
 	return NewBlock(data, 1,
 		[]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 }

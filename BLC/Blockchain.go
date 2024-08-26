@@ -44,46 +44,28 @@ func (blc *Blockchain) PrintChain() {
 }
 
 /* Create a block chain with Genesis block */
-func CreateBlockChainWithGenesis() *Blockchain {
+func CreateBlockChainWithGenesis(data string) {
 	if dbExisted() {
-		//fmt.Println("Genesis Block is existed!")
-		db, err := bolt.Open(dbName, 0600, nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-		var blc *Blockchain
-		err = db.View(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte(blockTableName))
-			hash := b.Get([]byte("latest"))
-			blc = &Blockchain{hash, db}
-			return nil
-		})
-		if err != nil {
-			log.Panic(err)
-		}
-		return blc
+		fmt.Println("Failed: Genesis block is existed!")
+		os.Exit(1)
 	}
 	// Open the blc.db data file
 	db, err := bolt.Open(dbName, 0600, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
-	var blockHash []byte
 	err = db.Update(func(tx *bolt.Tx) error {
-
-		b := tx.Bucket([]byte(blockTableName))
-		if b == nil {
-			//If table is not existed, Create table
-			b, err = tx.CreateBucket([]byte(blockTableName))
-			if err != nil { // db process Failed
-				return fmt.Errorf("create bucket failed: %s", err)
-			}
+		//Create table
+		b, err := tx.CreateBucket([]byte(blockTableName))
+		if err != nil { // db process Failed
+			return fmt.Errorf("create bucket failed: %s", err)
 		}
 
 		// Write on table
 		if b != nil { // db process Failed
-			genesisBlock := CreateGenesisBlock("Genesis Data ......")
+			genesisBlock := CreateGenesisBlock(data)
 			err := b.Put(genesisBlock.Hash, genesisBlock.Serialize())
 			if err != nil { // db process Failed
 				log.Panicf("Failed to PUT block into db! %s", err)
@@ -93,7 +75,6 @@ func CreateBlockChainWithGenesis() *Blockchain {
 			if err != nil { // db process Failed
 				log.Panicf("Failed to PUT latest hash into db! %s", err)
 			}
-			blockHash = genesisBlock.Hash
 		}
 		// For db process debugging
 		return nil
@@ -102,8 +83,6 @@ func CreateBlockChainWithGenesis() *Blockchain {
 	if err != nil {
 		log.Panic(err)
 	}
-
-	return &Blockchain{blockHash, db}
 }
 
 /* Add a block to the chain */
