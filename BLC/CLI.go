@@ -75,6 +75,10 @@ func (cli *CLI) Run() {
 		fmt.Println(*flagTo)
 		fmt.Println(*flagAmount)
 
+		fmt.Println(JSONToArray(*flagFrom))
+		fmt.Println(JSONToArray(*flagTo))
+		fmt.Println(JSONToArray(*flagAmount))
+
 	}
 
 	if printChainCmd.Parsed() {
