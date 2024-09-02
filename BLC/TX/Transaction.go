@@ -7,6 +7,7 @@ import (
 	"log"
 )
 
+// UTXO
 type Transaction struct {
 	TxHash []byte      // 1. Tx Hash
 	Vins   []*TxInput  // 2. input

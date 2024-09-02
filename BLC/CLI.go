@@ -14,7 +14,7 @@ type CLI struct {
 func printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("\tcreateGenesis -address \t-> Create genesis block")
-	fmt.Println("\taddBlock -data DATA \t-> TX data")
+	fmt.Println("\tsend -from SOURCE -to DEST -amount AMOUNT \t-> TX info")
 	fmt.Println("\tprintChain \t\t-> Print out blocks details")
 }
 func isValidArgs() {
@@ -26,11 +26,13 @@ func isValidArgs() {
 
 func (cli *CLI) Run() {
 	isValidArgs()
-	addBlockCmd := flag.NewFlagSet("addBlock", flag.ExitOnError)
+	sendBlockCmd := flag.NewFlagSet("send", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("printChain", flag.ExitOnError)
 	createGenesisCmd := flag.NewFlagSet("createGenesis", flag.ExitOnError)
 
-	flagAddBlockData := addBlockCmd.String("data", "github.com", "Tx data")
+	flagFrom := sendBlockCmd.String("from", "", "Source Address")
+	flagTo := sendBlockCmd.String("to", "", "Destination Address")
+	flagAmount := sendBlockCmd.String("amount", "", "Tx Amount")
 	flagCreateGenesisWithAddress := createGenesisCmd.String("address", "", "Create Genesis Block")
 	switch os.Args[1] {
 	case "createGenesis":
@@ -38,8 +40,8 @@ func (cli *CLI) Run() {
 		if err != nil {
 			log.Panic(err)
 		}
-	case "addBlock":
-		err := addBlockCmd.Parse(os.Args[2:])
+	case "send":
+		err := sendBlockCmd.Parse(os.Args[2:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -63,12 +65,16 @@ func (cli *CLI) Run() {
 		cli.createGenesis(*flagCreateGenesisWithAddress)
 	}
 
-	if addBlockCmd.Parsed() {
-		if *flagAddBlockData == "" {
+	if sendBlockCmd.Parsed() {
+		if *flagFrom == "" || *flagTo == "" || *flagAmount == "" {
 			printUsage()
 			os.Exit(1)
 		}
-		cli.addBlock([]*TX.Transaction{})
+		//cli.addBlock([]*TX.Transaction{})
+		fmt.Println(*flagFrom)
+		fmt.Println(*flagTo)
+		fmt.Println(*flagAmount)
+
 	}
 
 	if printChainCmd.Parsed() {

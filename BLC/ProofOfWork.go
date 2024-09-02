@@ -7,7 +7,7 @@ import (
 	"math/big"
 )
 
-const targetBits = 12
+const targetBits = 16
 
 type ProofOfWork struct {
 	Block  *Block   // current block to validate
