@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -56,7 +57,7 @@ func (blc *Blockchain) PrintChain() {
 }
 
 /* Create a block chain with Genesis block */
-func CreateBlockChainWithGenesis(addr string) {
+func CreateBlockChainWithGenesis(addr string) *Blockchain {
 	if DBExisted() {
 		fmt.Println("Failed: Genesis block is existed!")
 		os.Exit(1)
@@ -66,8 +67,10 @@ func CreateBlockChainWithGenesis(addr string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Close DB
 	defer db.Close()
 
+	var genesisHash []byte
 	err = db.Update(func(tx *bolt.Tx) error {
 		//Create table
 		b, err := tx.CreateBucket([]byte(blockTableName))
@@ -89,6 +92,7 @@ func CreateBlockChainWithGenesis(addr string) {
 			if err != nil { // db process Failed
 				log.Panicf("Failed to PUT latest hash into db! %s", err)
 			}
+			genesisHash = genesisBlock.Hash
 		}
 		// For db process debugging
 		return nil
@@ -97,6 +101,8 @@ func CreateBlockChainWithGenesis(addr string) {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	return &Blockchain{genesisHash, db}
 }
 
 /* Add a block to the chain */
@@ -137,7 +143,7 @@ func (blc *Blockchain) AddBlockToChain(txs []*TX.Transaction) {
 	}
 }
 
-func GetBlockChain() *Blockchain {
+func BlockChainObject() *Blockchain {
 
 	// Open the blc.db data file
 	db, err := bolt.Open(dbName, 0600, nil)
@@ -154,4 +160,51 @@ func GetBlockChain() *Blockchain {
 		return nil
 	})
 	return &Blockchain{tip, db}
+}
+
+// Mine a new block
+func (blockchain *Blockchain) MineNewBlock(from []string, to []string, amount []string) {
+	// Test case:
+	// ./bc send -from '[\"jing\",\"zhangqiang\"]' -to '[\"juncheng\",\"xiaoyong\"]' -amount '[\"2\",\"3\"]'
+	// ./bc send -from '[\"jing\"]' -to '[\"juncheng\"]' -amount '[\"4\"]'
+	fmt.Println(from)
+	fmt.Println(to)
+	fmt.Println(amount)
+
+	value, _ := strconv.Atoi(amount[0])
+	tx := TX.NewSimpleTransaction(from[0], to[0], int64(value))
+	// 1. create tx for each
+	var txs []*TX.Transaction
+	txs = append(txs, tx)
+
+	// 2. Get the latest block ptr
+	var block *Block
+	blockchain.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blockTableName))
+		if b != nil {
+			hash := b.Get([]byte("latest"))
+			blockBytes := b.Get(hash)
+			block = Deserialize(blockBytes)
+		}
+		return nil
+	})
+
+	// 3. Create a new block
+	block = NewBlock(txs, block.Height+1, block.Hash)
+
+	// 4. Add the new block
+	blockchain.DB.Update(func(tx *bolt.Tx) error {
+		// 4.1. Get table
+		b := tx.Bucket([]byte(blockTableName))
+
+		// 4.2. Write on table
+		if b != nil { // db process
+			b.Put(block.Hash, block.Serialize())
+			b.Put([]byte("latest"), block.Hash)
+			blockchain.Tip = block.Hash
+		}
+
+		return nil
+	})
+
 }

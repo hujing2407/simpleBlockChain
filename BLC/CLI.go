@@ -3,7 +3,6 @@ package BLC
 import (
 	"flag"
 	"fmt"
-	"hu169.ca/simpleBlockChain/BLC/TX"
 	"log"
 	"os"
 )
@@ -71,13 +70,17 @@ func (cli *CLI) Run() {
 			os.Exit(1)
 		}
 		//cli.addBlock([]*TX.Transaction{})
-		fmt.Println(*flagFrom)
-		fmt.Println(*flagTo)
-		fmt.Println(*flagAmount)
+		//fmt.Println(*flagFrom)
+		//fmt.Println(*flagTo)
+		//fmt.Println(*flagAmount)
 
-		fmt.Println(JSONToArray(*flagFrom))
-		fmt.Println(JSONToArray(*flagTo))
-		fmt.Println(JSONToArray(*flagAmount))
+		//fmt.Println(JSONToArray(*flagFrom))
+		//fmt.Println(JSONToArray(*flagTo))
+		//fmt.Println(JSONToArray(*flagAmount))
+		from := JSONToArray(*flagFrom)
+		to := JSONToArray(*flagTo)
+		amount := JSONToArray(*flagAmount)
+		cli.send(from, to, amount)
 
 	}
 
@@ -86,25 +89,40 @@ func (cli *CLI) Run() {
 		cli.printChain()
 	}
 }
+
+// Create genesis block
 func (cli *CLI) createGenesis(address string) {
-	CreateBlockChainWithGenesis(address)
+	blockchain := CreateBlockChainWithGenesis(address)
+	defer blockchain.DB.Close()
 }
-func (cli *CLI) addBlock(txs []*TX.Transaction) {
+
+// Transaction
+func (cli *CLI) send(from []string, to []string, amount []string) {
 	if DBExisted() == false {
 		fmt.Println("Error: Database is not existed!")
 		os.Exit(1)
 	}
-	blc := GetBlockChain()
-	defer blc.DB.Close()
-	blc.AddBlockToChain(txs)
+	blockchain := BlockChainObject()
+	defer blockchain.DB.Close()
+	blockchain.MineNewBlock(from, to, amount)
 }
+
+//func (cli *CLI) addBlock(txs []*TX.Transaction) {
+//	if DBExisted() == false {
+//		fmt.Println("Error: Database is not existed!")
+//		os.Exit(1)
+//	}
+//	blc := BlockChainObject()
+//	defer blc.DB.Close()
+//	blc.AddBlockToChain(txs)
+//}
 
 func (cli *CLI) printChain() {
 	if DBExisted() == false {
 		fmt.Println("Error: Database is not existed!")
 		os.Exit(1)
 	}
-	blc := GetBlockChain()
+	blc := BlockChainObject()
 	defer blc.DB.Close()
 	blc.PrintChain()
 }
