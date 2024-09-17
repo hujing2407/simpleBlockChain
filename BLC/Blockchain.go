@@ -162,11 +162,19 @@ func BlockChainObject() *Blockchain {
 	return &Blockchain{tip, db}
 }
 
+// Find out all txs unspent for the address
+func UnSpentTransactionsWithAddr(addr string) []*TX.Transaction {
+
+	return nil
+}
+
 // Mine a new block
 func (blockchain *Blockchain) MineNewBlock(from []string, to []string, amount []string) {
 	// Test case:
 	// ./bc send -from '[\"jing\",\"zhangqiang\"]' -to '[\"juncheng\",\"xiaoyong\"]' -amount '[\"2\",\"3\"]'
-	// ./bc send -from '[\"jing\"]' -to '[\"juncheng\"]' -amount '[\"4\"]'
+	// second block:  ./bc send -from '[\"jing\"]' -to '[\"juncheng\"]' -amount '[\"4\"]'
+	// third block: ./bc send -from '[\"juncheng\"]' -to '[\"zhangqiang\"]' -amount '[\"2\"]'
+	// forth block:  ./bc send -from '[\"jing\"]' -to '[\"zhangqiang\"]' -amount '[\"2\"]'
 	fmt.Println(from)
 	fmt.Println(to)
 	fmt.Println(amount)
